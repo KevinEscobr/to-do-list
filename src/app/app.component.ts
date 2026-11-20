@@ -131,7 +131,8 @@ export class AppComponent {
     });
     await toast.present();
     const link = document.createElement('a');
-    link.href = '/TaskFlowPro.apk';
+    link.href = 'https://todolist.nennge.me/TaskFlowPro.apk';
+    link.target = '_blank';
     link.download = 'TaskFlowPro.apk';
     document.body.appendChild(link);
     link.click();

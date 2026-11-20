@@ -6,7 +6,8 @@ Este documento describe exclusivamente los pasos para ejecutar la aplicacion fro
 
 ## Proyecto en Produccion con Servidor Propio
 
-URL de acceso a la aplicacion: https://todolist.nennge.me/login
+- URL de acceso a la aplicacion: https://todolist.nennge.me/login
+- Enlace de descarga de APK: https://todolist.nennge.me/TaskFlowPro.apk
 
 ---
 
@@ -54,6 +55,14 @@ Nota: Si dispone de Ionic CLI instalado de forma global, tambien puede utilizar:
 ionic serve
 ```
 El cual abrira la aplicacion por defecto en `http://localhost:8100`.
+
+### Paso 4: Inicio de Sesion y Autenticacion (Login)
+Al ingresar a la aplicacion (en `http://localhost:4200` o en produccion `https://todolist.nennge.me/login`):
+- **Cuenta de Prueba (Demo):** Puede presionar el boton "Auto-rellenar cuenta demo" o utilizar:
+  - **Usuario:** `demo`
+  - **Contraseña:** `123456`
+- **Registro de Nuevos Usuarios:** Puede ingresar a la pestaña "Registrarse" para crear una cuenta con sus propias credenciales.
+- **Seguridad:** El sistema implementa autenticacion mediante JWT (JSON Web Tokens) con soporte offline en caso de perdida de conexion con el servidor.
 
 ---
 
@@ -112,7 +121,10 @@ android/app/build/outputs/apk/debug/app-debug.apk
 
 ## 4. Instalacion del APK en un Dispositivo o Emulador
 
-Una vez generado `app-debug.apk`, puede instalarlo utilizando cualquiera de las siguientes alternativas:
+Puede descargar el APK directamente desde:
+- Enlace directo: https://todolist.nennge.me/TaskFlowPro.apk
+
+O una vez generado `app-debug.apk` localmente, puede instalarlo utilizando cualquiera de las siguientes alternativas:
 
 1. Mediante la herramienta ADB (Android Debug Bridge):
    Con su dispositivo conectado por USB (con depuracion USB habilitada) o con un emulador abierto:
