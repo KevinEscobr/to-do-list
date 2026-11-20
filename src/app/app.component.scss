@@ -1,0 +1,101 @@
+.drawer-content {
+  --background: #f8f9fa;
+}
+
+.user-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #e9ecef;
+
+  .user-avatar-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(var(--ion-color-primary-rgb), 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .avatar-icon {
+      font-size: 40px;
+      color: var(--ion-color-primary);
+    }
+  }
+
+  .user-meta {
+    flex: 1;
+
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--ion-color-dark);
+    }
+
+    p {
+      margin: 2px 0 4px;
+      font-size: 0.8rem;
+      color: var(--ion-color-step-600, #666);
+    }
+
+    .session-badge {
+      font-size: 0.7rem;
+      padding: 3px 6px;
+      border-radius: 6px;
+    }
+  }
+}
+
+.sync-stats-card {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border-radius: 12px;
+  margin-left: 12px;
+  margin-right: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+
+  .stat-box {
+    text-align: center;
+    flex: 1;
+
+    .stat-num {
+      display: block;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--ion-color-dark);
+
+      &.color-success {
+        color: var(--ion-color-success);
+      }
+
+      &.color-warning {
+        color: var(--ion-color-warning);
+      }
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--ion-color-step-600, #777);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+}
+
+.menu-item {
+  --background: transparent;
+  --border-radius: 10px;
+  margin: 4px 10px;
+  font-weight: 500;
+
+  &.selected {
+    --background: rgba(var(--ion-color-primary-rgb), 0.12);
+    --color: var(--ion-color-primary);
+    font-weight: 600;
+  }
+}

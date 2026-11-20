@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  taskflow-api:
+    build: .
+    container_name: taskflow-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - JWT_SECRET=super_secreto_taskflow_pro_2026_jwt_token_key_segura
+      - DATABASE_FILE=/app/data/database.sqlite
+      - CORS_ORIGIN=*
+    volumes:
+      # Persistencia de la base de datos en el servidor
+      - taskflow-data:/app/data
+
+volumes:
+  taskflow-data:

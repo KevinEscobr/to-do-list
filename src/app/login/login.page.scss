@@ -1,0 +1,205 @@
+.login-content {
+  --background: var(--ion-background-color, #f4f6f9);
+}
+
+.login-wrapper {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 1rem 0.75rem 2rem;
+}
+
+.brand-section {
+  text-align: center;
+  margin-bottom: 1.25rem;
+
+  .brand-icon-box {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 0.75rem;
+    background: linear-gradient(135deg, var(--ion-color-primary, #3880ff), var(--ion-color-primary-shade, #3171e0));
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.3);
+
+    ion-icon {
+      font-size: 38px;
+      color: #ffffff;
+    }
+  }
+
+  .brand-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--ion-text-color, #1a202c);
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+
+  .brand-subtitle {
+    font-size: 0.88rem;
+    color: var(--ion-color-step-600, #718096);
+    margin: 0.35rem 0 0;
+    line-height: 1.4;
+  }
+}
+
+.server-badge-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 0.85rem;
+}
+
+.server-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+
+  &.checking {
+    background: rgba(var(--ion-color-medium-rgb, 146, 148, 156), 0.14);
+    color: var(--ion-color-step-800, #2d3748);
+    border: 1px solid rgba(var(--ion-color-medium-rgb, 146, 148, 156), 0.25);
+    .spinner-small {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  &.online {
+    background: rgba(var(--ion-color-success-rgb, 45, 211, 111), 0.12);
+    color: var(--ion-color-success, #2dd36f);
+    border: 1px solid rgba(var(--ion-color-success-rgb, 45, 211, 111), 0.35);
+  }
+
+  &.offline {
+    background: rgba(var(--ion-color-danger-rgb, 235, 68, 90), 0.12);
+    color: var(--ion-color-danger, #eb445a);
+    border: 1px solid rgba(var(--ion-color-danger-rgb, 235, 68, 90), 0.35);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+
+    &.green {
+      background: #2dd36f;
+      box-shadow: 0 0 6px rgba(45, 211, 111, 0.6);
+    }
+
+    &.red {
+      background: #eb445a;
+      box-shadow: 0 0 6px rgba(235, 68, 90, 0.6);
+    }
+  }
+
+  .refresh-icon {
+    font-size: 0.95rem;
+    opacity: 0.75;
+    margin-left: 2px;
+  }
+}
+
+.btn-config-server {
+  --color: var(--ion-color-step-600, #718096);
+  height: 28px;
+  margin: 0;
+  ion-icon {
+    font-size: 1.1rem;
+  }
+}
+
+.auth-segment {
+  background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.08);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 1rem;
+
+  ion-segment-button {
+    --color: var(--ion-color-step-600, #718096);
+    --color-checked: var(--ion-color-primary, #3880ff);
+    font-weight: 600;
+  }
+}
+
+.auth-card {
+  margin: 0;
+  border-radius: 16px;
+  background: #ffffff !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+
+  ion-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a202c !important;
+  }
+
+  ion-card-subtitle {
+    font-size: 0.85rem;
+    color: #718096 !important;
+    margin-top: 0.25rem;
+  }
+}
+
+.auth-item {
+  --background: #ffffff !important;
+  background: #ffffff !important;
+  --color: #000000 !important;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+  transition: all 0.2s ease;
+
+  &:focus-within {
+    border-color: var(--ion-color-primary, #3880ff);
+    box-shadow: 0 0 0 2px rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.2);
+  }
+
+  ion-icon {
+    font-size: 1.25rem;
+    margin-right: 8px;
+    color: var(--ion-color-primary, #3880ff);
+  }
+
+  ion-label {
+    color: #334155 !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+  }
+
+  ion-input {
+    --color: #000000 !important;
+    --placeholder-color: #64748b !important;
+    --placeholder-opacity: 0.85;
+    color: #000000 !important;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+}
+
+.btn-primary {
+  --border-radius: 10px;
+  font-weight: 600;
+  height: 48px;
+  font-size: 1rem;
+}
+
+.btn-demo {
+  --color: var(--ion-color-primary, #3880ff);
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}

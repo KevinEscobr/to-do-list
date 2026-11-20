@@ -1,0 +1,599 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <!-- Botón del Menú Lateral (Drawer) -->
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+
+    <ion-title>TaskFlow Pro</ion-title>
+
+    <ion-buttons slot="end">
+      <!-- Único botón en el Navbar: Sincronización con Nube (Verde = Todo subido, Rojo = Pendiente de subir) -->
+      <ion-button
+        (click)="triggerSync()"
+        class="sync-navbar-btn"
+        [title]="taskService.pendingSyncCount() > 0 ? ('Subir ' + taskService.pendingSyncCount() + ' tareas pendientes al servidor') : 'Todas las tareas subidas al backend'"
+      >
+        @if (taskService.isSyncing()) {
+          <ion-spinner name="crescent" class="sync-spinner"></ion-spinner>
+        } @else {
+          <ion-icon
+            slot="icon-only"
+            name="cloud"
+            class="nav-cloud-icon"
+            [class.cloud-red]="taskService.pendingSyncCount() > 0"
+            [class.cloud-green]="taskService.pendingSyncCount() === 0"
+          ></ion-icon>
+          @if (taskService.pendingSyncCount() > 0) {
+            <ion-badge color="danger" class="nav-sync-badge">{{ taskService.pendingSyncCount() }}</ion-badge>
+          }
+        }
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <!-- Barra de búsqueda -->
+  <ion-toolbar color="primary">
+    <ion-searchbar
+      [(ngModel)]="searchTerm"
+      placeholder="Buscar por título, descripción o ciudad..."
+      [debounce]="150"
+      showClearButton="focus"
+    >
+    </ion-searchbar>
+  </ion-toolbar>
+
+  <!-- Filtro por estado -->
+  <ion-toolbar>
+    <ion-segment [(ngModel)]="filter">
+      <ion-segment-button value="all">
+        <ion-label>Todas ({{ taskService.totalCount() }})</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="pending">
+        <ion-label>Pendientes ({{ taskService.pendingCount() }})</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="completed">
+        <ion-label>Hechas ({{ taskService.completedCount() }})</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <!-- Barra de estado de usuario activo y sincronización -->
+  @if (authService.currentUser(); as user) {
+  <div class="user-strip">
+    <div class="user-greeting">
+      <ion-icon name="person-circle-outline" color="primary"></ion-icon>
+      <span>Tareas de <strong>{{ user.name }}</strong></span>
+    </div>
+    <div class="sync-indicator" role="button" tabindex="0" (click)="triggerSync()" (keydown.enter)="triggerSync()">
+      @if (taskService.pendingSyncCount() === 0) {
+      <span class="badge-synced"> <ion-icon name="cloud-done-outline"></ion-icon> Sincronizado </span>
+      } @else {
+      <span class="badge-pending">
+        <ion-icon name="cloud-upload-outline"></ion-icon> {{ taskService.pendingSyncCount() }} pendientes
+      </span>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- Input rápido para agregar tarea -->
+  <ion-item lines="none" class="add-task-box ion-margin-bottom">
+    <ion-input [(ngModel)]="newTaskText" placeholder="Agregar tarea rápida..." (keyup.enter)="addTaskQuick()">
+    </ion-input>
+    <ion-button slot="end" fill="solid" color="primary" (click)="addTaskQuick()" title="Crear rápida">
+      <ion-icon slot="icon-only" name="add-outline"></ion-icon>
+    </ion-button>
+    <ion-button
+      slot="end"
+      fill="outline"
+      color="tertiary"
+      (click)="openCreateModalWithLocation()"
+      title="Con GPS y Clima"
+    >
+      <ion-icon slot="icon-only" name="location-outline"></ion-icon>
+    </ion-button>
+    <ion-button slot="end" fill="outline" color="secondary" (click)="openCreateModal()" title="Con foto y GPS">
+      <ion-icon slot="icon-only" name="camera-outline"></ion-icon>
+    </ion-button>
+  </ion-item>
+
+  <!-- Barra de control de lista (conteo y Seleccionar todas) -->
+  @if (filteredTasks.length > 0) {
+  <div class="list-header-bar">
+    <span class="list-count-text">
+      {{ filteredTasks.length }} {{ filteredTasks.length === 1 ? 'tarea' : 'tareas' }}
+    </span>
+    <ion-button fill="clear" size="small" class="select-all-btn" (click)="toggleSelectAll()">
+      <ion-icon
+        slot="start"
+        [name]="allFilteredSelected ? 'close-circle-outline' : 'checkmark-done-circle-outline'"
+      ></ion-icon>
+      {{ allFilteredSelected ? 'Deseleccionar todas' : 'Seleccionar todas' }}
+    </ion-button>
+  </div>
+  }
+
+  <!-- Lista de tareas -->
+  @if (filteredTasks.length > 0) {
+  <ion-list class="tasks-list">
+    @for (task of filteredTasks; track task.id) {
+    <ion-item-sliding>
+      <ion-item lines="none" [class.is-done]="task.completed" class="task-item">
+        <!-- Checkbox para marcar completada -->
+        <ion-checkbox slot="start" [(ngModel)]="task.completed" (ionChange)="toggleTask(task)"> </ion-checkbox>
+
+        <!-- Miniatura de foto si la tarea tiene imagen adjunta (Cámara) -->
+        @if (task.imageUrl) {
+        <div
+          class="task-thumbnail-wrapper"
+          role="button"
+          tabindex="0"
+          (click)="openImagePreview(task.imageUrl, $event)"
+          (keydown.enter)="openImagePreview(task.imageUrl, $event)"
+          title="Ver foto"
+        >
+          <img [src]="task.imageUrl" alt="Foto de tarea" class="task-thumbnail" />
+        </div>
+        }
+
+        <!-- Contenido principal -->
+        <ion-label
+          (click)="viewTaskDetail(task)"
+          (keydown.enter)="viewTaskDetail(task)"
+          tabindex="0"
+          class="task-label"
+        >
+          <div class="task-title-row">
+            <h2 [class.completed-text]="task.completed">{{ task.text }}</h2>
+            @if (task.synced) {
+            <ion-icon
+              name="cloud-done-outline"
+              color="success"
+              class="sync-mini-icon"
+              title="Sincronizada con API"
+            ></ion-icon>
+            } @else {
+            <ion-icon
+              name="cloud-upload-outline"
+              color="warning"
+              class="sync-mini-icon"
+              title="Pendiente de sincronizar"
+            ></ion-icon>
+            }
+          </div>
+
+          @if (task.description) {
+          <p class="task-desc">{{ task.description }}</p>
+          }
+
+          <div class="task-tags-row">
+            <ion-badge [color]="getCategoryColor(task.category)" class="tag-badge"> {{ task.category }} </ion-badge>
+            <ion-badge [color]="getPriorityColor(task.priority)" class="tag-badge"> {{ task.priority }} </ion-badge>
+
+            <!-- Chip de GPS y Ubicación -->
+            @if (task.location) {
+            <ion-chip
+              color="tertiary"
+              class="geo-chip"
+              (click)="openMaps(task.location, $event)"
+              (keydown.enter)="openMaps(task.location, $event)"
+              tabindex="0"
+              title="Ver en Google Maps"
+            >
+              <ion-icon name="location-outline"></ion-icon>
+              <ion-label>{{ task.location.city || task.location.address || 'Ubicación GPS' }}</ion-label>
+            </ion-chip>
+            }
+
+            <!-- Chip de Clima (API externa) -->
+            @if (task.weather) {
+            <ion-chip color="secondary" class="weather-chip">
+              <ion-icon name="thermometer-outline"></ion-icon>
+              <ion-label>{{ task.weather.temperature }}°C {{ task.weather.description }}</ion-label>
+            </ion-chip>
+            }
+
+            <ion-note color="medium" class="task-date"> {{ task.createdAt | date:'shortTime' }} </ion-note>
+          </div>
+        </ion-label>
+
+        <!-- Botones de acción directa en el item -->
+        <ion-buttons slot="end">
+          <ion-button
+            fill="clear"
+            color="primary"
+            (click)="openEditAlert(task, $event)"
+            title="Editar título/descripción"
+          >
+            <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+          </ion-button>
+          <ion-button fill="clear" color="danger" (click)="confirmDelete(task, $event)" title="Eliminar">
+            <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-item>
+
+      <!-- Opciones al deslizar (Swiping en móvil) -->
+      <ion-item-options side="end">
+        <ion-item-option color="primary" (click)="openEditAlert(task)">
+          <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+        </ion-item-option>
+        <ion-item-option color="danger" (click)="confirmDelete(task)">
+          <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+        </ion-item-option>
+      </ion-item-options>
+    </ion-item-sliding>
+    }
+  </ion-list>
+  } @else {
+  <!-- Estado vacío (Empty State) -->
+  <div class="empty-state">
+    <ion-icon name="list-outline" class="empty-icon"></ion-icon>
+    <h3>No se encontraron tareas</h3>
+    @if (searchTerm) {
+    <p>No hay resultados para "{{ searchTerm }}"</p>
+    } @if (!searchTerm && filter === 'pending') {
+    <p>¡Buen trabajo! No tienes tareas pendientes.</p>
+    } @if (!searchTerm && filter === 'completed') {
+    <p>Aún no has completado ninguna tarea.</p>
+    } @if (!searchTerm && filter === 'all') {
+    <p>Crea tu primera tarea usando el botón superior (+) o la barra rápida.</p>
+    }
+  </div>
+  }
+
+  <!-- MODAL: CREAR TAREA AVANZADA (CON CÁMARA Y GPS) -->
+  <ion-modal #createModal [isOpen]="isCreateModalOpen" (didDismiss)="closeCreateModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>Nueva Tarea Avanzada</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeCreateModal()">
+              <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding modal-content">
+        <ion-item lines="inset" class="form-item">
+          <ion-label position="stacked">Título de la Tarea*</ion-label>
+          <ion-input [(ngModel)]="formText" placeholder="¿Qué necesitas hacer?"></ion-input>
+        </ion-item>
+
+        <ion-item lines="inset" class="form-item ion-margin-top">
+          <ion-label position="stacked">Descripción (Opcional)</ion-label>
+          <ion-textarea
+            [(ngModel)]="formDescription"
+            [rows]="3"
+            placeholder="Detalles o notas sobre la tarea"
+          ></ion-textarea>
+        </ion-item>
+
+        <div class="category-priority-row ion-margin-top">
+          <ion-item lines="inset" class="form-item half-width">
+            <ion-label position="stacked">Categoría</ion-label>
+            <ion-select [(ngModel)]="formCategory">
+              <ion-select-option value="Personal">Personal</ion-select-option>
+              <ion-select-option value="Trabajo">Trabajo</ion-select-option>
+              <ion-select-option value="Estudio">Estudio</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item lines="inset" class="form-item half-width">
+            <ion-label position="stacked">Prioridad</ion-label>
+            <ion-select [(ngModel)]="formPriority">
+              <ion-select-option value="Baja">Baja</ion-select-option>
+              <ion-select-option value="Media">Media</ion-select-option>
+              <ion-select-option value="Alta">Alta</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </div>
+
+        <!-- SECCIÓN PERIFÉRICO: CÁMARA -->
+        <div class="peripheral-section ion-margin-top">
+          <h4 class="section-title">
+            <ion-icon name="camera-outline" color="primary"></ion-icon>
+            Foto / Imagen Adjunta
+          </h4>
+
+          @if (!formImage) {
+          <div class="peripheral-btn-box">
+            <ion-button
+              expand="block"
+              fill="outline"
+              color="primary"
+              (click)="takePhoto()"
+              [disabled]="isCapturingPhoto"
+            >
+              @if (isCapturingPhoto) {
+              <ion-spinner name="crescent"></ion-spinner>
+              } @else {
+              <ion-icon slot="start" name="camera-outline"></ion-icon>
+              }
+              <span>{{ isCapturingPhoto ? 'Abriendo Cámara...' : 'Capturar Foto con Cámara' }}</span>
+            </ion-button>
+          </div>
+          } @else {
+          <div class="image-preview-box">
+            <img
+              [src]="formImage"
+              alt="Foto capturada"
+              class="preview-img"
+              role="button"
+              tabindex="0"
+              (click)="openImagePreview(formImage)"
+              (keydown.enter)="openImagePreview(formImage)"
+            />
+            <div class="image-preview-actions">
+              <ion-button size="small" fill="outline" color="primary" (click)="takePhoto()">
+                <ion-icon slot="start" name="refresh-outline"></ion-icon> Cambiar
+              </ion-button>
+              <ion-button size="small" fill="clear" color="danger" (click)="removeFormImage()">
+                <ion-icon slot="start" name="trash-outline"></ion-icon> Quitar
+              </ion-button>
+            </div>
+          </div>
+          }
+        </div>
+
+        <!-- SECCIÓN PERIFÉRICO: GPS / GEOLOCALIZACIÓN -->
+        <div class="peripheral-section ion-margin-top">
+          <h4 class="section-title">
+            <ion-icon name="location-outline" color="secondary"></ion-icon>
+            Ubicación de la Tarea
+          </h4>
+
+          @if (!formLocation) {
+          <div class="peripheral-btn-box">
+            <ion-button
+              expand="block"
+              fill="outline"
+              color="secondary"
+              (click)="captureLocation()"
+              [disabled]="isGettingLocation"
+              class="btn-gps"
+            >
+              @if (isGettingLocation) {
+              <ion-spinner name="crescent"></ion-spinner>
+              } @else {
+              <ion-icon slot="start" name="navigate-outline"></ion-icon>
+              }
+              <span>{{ isGettingLocation ? 'Obteniendo GPS y Clima...' : 'Detectar mi Ubicación GPS' }}</span>
+            </ion-button>
+
+            <div class="location-extra-actions ion-margin-top">
+              <ion-button size="small" fill="clear" color="primary" (click)="selectPresetLocation()">
+                <ion-icon slot="start" name="business-outline"></ion-icon>
+                Elegir Ciudad (Chile)
+              </ion-button>
+              <ion-button size="small" fill="clear" color="tertiary" (click)="searchLocationPrompt()">
+                <ion-icon slot="start" name="search-outline"></ion-icon>
+                Buscar Dirección
+              </ion-button>
+            </div>
+          </div>
+          } @else {
+          <div class="location-preview-box">
+            <div class="location-info">
+              <ion-icon name="location-outline" color="danger" class="loc-pin"></ion-icon>
+              <div>
+                <strong>{{ formLocation.address || 'Coordenadas registradas' }}</strong>
+                <p class="coords-text">Lat: {{ formLocation.latitude }}, Lon: {{ formLocation.longitude }}</p>
+                @if (formWeather) {
+                <p class="weather-text">
+                  <ion-icon name="thermometer-outline"></ion-icon>
+                  {{ formWeather.temperature }}°C - {{ formWeather.description }}
+                </p>
+                }
+              </div>
+            </div>
+            <div class="location-actions">
+              <ion-button
+                size="small"
+                fill="clear"
+                color="secondary"
+                (click)="openLocationPicker()"
+                title="Cambiar ubicación"
+              >
+                <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
+              </ion-button>
+              <ion-button size="small" fill="clear" color="danger" (click)="removeFormLocation()" title="Quitar">
+                <ion-icon slot="icon-only" name="close-circle-outline"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+          }
+        </div>
+
+        <!-- BOTONES DE ACCIÓN FINAL -->
+        <div class="form-submit-row ion-margin-top ion-margin-bottom">
+          <ion-button expand="block" color="primary" class="btn-create" (click)="saveNewTask()">
+            <ion-icon slot="start" name="checkmark-circle-outline"></ion-icon>
+            Guardar Tarea
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- MODAL: DETALLE COMPLETO DE TAREA -->
+  <ion-modal #detailModal [isOpen]="isDetailModalOpen" (didDismiss)="closeDetailModal()">
+    <ng-template>
+      @if (selectedTask) {
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>Detalle de Tarea</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeDetailModal()">
+              <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding detail-content">
+        <div class="detail-header">
+          <h2 [class.completed-text]="selectedTask.completed">{{ selectedTask.text }}</h2>
+          <ion-badge [color]="selectedTask.completed ? 'success' : 'warning'">
+            {{ selectedTask.completed ? 'Completada' : 'Pendiente' }}
+          </ion-badge>
+        </div>
+
+        @if (selectedTask.description) {
+        <p class="detail-description">{{ selectedTask.description }}</p>
+        }
+
+        <!-- Foto adjunta -->
+        @if (selectedTask.imageUrl) {
+        <div class="detail-image-section ion-margin-top">
+          <h4>Foto Adjunta</h4>
+          <img
+            [src]="selectedTask.imageUrl"
+            alt="Foto adjunta"
+            class="detail-full-image"
+            role="button"
+            tabindex="0"
+            (click)="openImagePreview(selectedTask.imageUrl)"
+            (keydown.enter)="openImagePreview(selectedTask.imageUrl)"
+          />
+        </div>
+        }
+
+        <!-- Ubicación GPS -->
+        <div class="detail-location-section ion-margin-top">
+          <div class="section-title-bar">
+            <h4>Ubicación GPS</h4>
+            <ion-button size="small" fill="clear" color="secondary" (click)="attachLocationToSelectedTask()">
+              <ion-icon slot="start" [name]="selectedTask.location ? 'refresh-outline' : 'add-outline'"></ion-icon>
+              {{ selectedTask.location ? 'Cambiar' : 'Agregar' }}
+            </ion-button>
+          </div>
+
+          @if (selectedTask.location) {
+          <div
+            class="location-card"
+            role="button"
+            tabindex="0"
+            (click)="openMaps(selectedTask.location)"
+            (keydown.enter)="openMaps(selectedTask.location)"
+          >
+            <ion-icon name="navigate-outline" color="danger" class="map-icon"></ion-icon>
+            <div class="location-meta">
+              <strong>{{ selectedTask.location.address || 'Ubicación Registrada' }}</strong>
+              <p>Lat: {{ selectedTask.location.latitude }}, Lon: {{ selectedTask.location.longitude }}</p>
+              <ion-note color="primary">Toca para abrir en Google Maps</ion-note>
+            </div>
+          </div>
+          } @else {
+          <div
+            class="empty-location-hint"
+            role="button"
+            tabindex="0"
+            (click)="attachLocationToSelectedTask()"
+            (keydown.enter)="attachLocationToSelectedTask()"
+          >
+            <ion-icon name="location-outline"></ion-icon>
+            <span>Toca para asignar coordenadas GPS o una ciudad</span>
+          </div>
+          }
+        </div>
+
+        <!-- Clima registrado -->
+        @if (selectedTask.weather) {
+        <div class="detail-weather-section ion-margin-top">
+          <h4>Clima al registrar</h4>
+          <div class="weather-card">
+            <ion-icon name="thermometer-outline" color="warning"></ion-icon>
+            <span
+              >{{ selectedTask.weather.temperature }}°C - {{ selectedTask.weather.description }} (Viento: {{
+              selectedTask.weather.windSpeed }} km/h)</span
+            >
+          </div>
+        </div>
+        }
+
+        <!-- Estado de Sincronización Remota -->
+        <div class="detail-sync-section ion-margin-top">
+          <h4>Sincronización Web</h4>
+          <ion-chip [color]="selectedTask.synced ? 'success' : 'warning'">
+            <ion-icon [name]="selectedTask.synced ? 'cloud-done-outline' : 'cloud-upload-outline'"></ion-icon>
+            <ion-label
+              >{{ selectedTask.synced ? 'Sincronizada con API externa (ID: #' + selectedTask.remoteId + ')' : 'Pendiente
+              de sincronizar' }}</ion-label
+            >
+          </ion-chip>
+        </div>
+
+        <div class="detail-actions ion-margin-top">
+          <ion-button expand="block" fill="solid" color="primary" (click)="openEditAlert(selectedTask)">
+            <ion-icon slot="start" name="create-outline"></ion-icon> Editar
+          </ion-button>
+          <ion-button
+            expand="block"
+            fill="outline"
+            color="danger"
+            class="ion-margin-top"
+            (click)="confirmDelete(selectedTask)"
+          >
+            <ion-icon slot="start" name="trash-outline"></ion-icon> Eliminar
+          </ion-button>
+        </div>
+      </ion-content>
+      }
+    </ng-template>
+  </ion-modal>
+
+  <!-- MODAL: VISTA PREVIA DE IMAGEN EN PANTALLA COMPLETA -->
+  <ion-modal [isOpen]="isImagePreviewOpen" (didDismiss)="closeImagePreview()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="dark">
+          <ion-title>Foto Adjunta</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeImagePreview()">
+              <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="image-fullscreen-content">
+        <div class="full-img-container">
+          @if (previewImageUrl) {
+          <img [src]="previewImageUrl" alt="Visualización ampliada" class="full-img" />
+          }
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>
+
+<!-- BARRA INFERIOR / FOOTER PARA ACCIONES EN LOTE -->
+@if (taskService.completedCount() > 0) {
+<ion-footer class="bulk-footer">
+  <ion-toolbar color="light">
+    <div class="bulk-footer-content">
+      <div class="bulk-footer-info">
+        <ion-icon name="checkbox" color="primary"></ion-icon>
+        <span>
+          <strong>{{ taskService.completedCount() }}</strong>
+          {{ taskService.completedCount() === 1 ? 'seleccionada' : 'seleccionadas' }}
+        </span>
+      </div>
+      <div class="bulk-footer-actions">
+        <ion-button fill="clear" size="small" color="medium" (click)="uncheckAllCompleted()">
+          Deseleccionar
+        </ion-button>
+        <ion-button color="danger" size="small" fill="solid" class="delete-bulk-btn" (click)="confirmDeleteSelected()">
+          <ion-icon slot="start" name="trash-outline"></ion-icon>
+          Eliminar todas
+        </ion-button>
+      </div>
+    </div>
+  </ion-toolbar>
+</ion-footer>
+}

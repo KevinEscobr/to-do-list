@@ -1,0 +1,123 @@
+<ion-app>
+  <!-- Menú Lateral (Drawer Navigation) -->
+  <ion-menu contentId="main-content" type="overlay">
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>TaskFlow Pro</ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="drawer-content">
+      <!-- Sección de perfil de usuario activo -->
+      @if (authService.currentUser(); as user) {
+        <div class="user-profile-header ion-padding">
+          <div class="user-avatar-box">
+            <ion-icon name="person-circle-outline" class="avatar-icon"></ion-icon>
+          </div>
+          <div class="user-meta">
+            <h3>{{ user.name }}</h3>
+            <p>{{ user.email }}</p>
+            <ion-badge color="success" class="session-badge">Activo ({{ user.username }})</ion-badge>
+          </div>
+        </div>
+      } @else {
+        <div class="user-profile-header ion-padding">
+          <div class="user-avatar-box">
+            <ion-icon name="person-circle-outline" class="avatar-icon"></ion-icon>
+          </div>
+          <div class="user-meta">
+            <h3>Sin Sesión</h3>
+            <p>Inicia sesión para proteger tus tareas</p>
+          </div>
+        </div>
+      }
+
+      <!-- Métricas de sincronización y tareas -->
+      <div class="sync-stats-card ion-padding-horizontal ion-margin-bottom">
+        <div class="stat-box">
+          <span class="stat-num">{{ taskService.totalCount() }}</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num color-success">{{ taskService.syncedCount() }}</span>
+          <span class="stat-label">Sincronizadas</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num color-warning">{{ taskService.pendingSyncCount() }}</span>
+          <span class="stat-label">Pendientes</span>
+        </div>
+      </div>
+
+      <!-- Opciones del menú -->
+      <ion-list lines="none">
+        <ion-menu-toggle [autoHide]="false">
+          <ion-item routerLink="/home" routerDirection="root" routerLinkActive="selected" class="menu-item">
+            <ion-icon slot="start" name="checkbox-outline" color="primary"></ion-icon>
+            <ion-label>Mis Tareas</ion-label>
+            <ion-badge slot="end" color="primary">{{ taskService.pendingCount() }}</ion-badge>
+          </ion-item>
+        </ion-menu-toggle>
+
+        <ion-menu-toggle [autoHide]="false">
+          <ion-item button (click)="syncNow()" class="menu-item" [disabled]="taskService.isSyncing()">
+            <ion-icon slot="start" name="cloud-upload-outline" color="secondary"></ion-icon>
+            <ion-label>
+              <h3>Sincronizar con API</h3>
+              @if (taskService.pendingSyncCount() > 0) {
+                <p>{{ taskService.pendingSyncCount() }} pendientes</p>
+              } @else {
+                <p>Todo sincronizado</p>
+              }
+            </ion-label>
+            @if (taskService.pendingSyncCount() > 0) {
+              <ion-badge slot="end" color="warning">
+                {{ taskService.pendingSyncCount() }}
+              </ion-badge>
+            }
+          </ion-item>
+        </ion-menu-toggle>
+
+        <ion-menu-toggle [autoHide]="false">
+          <ion-item button (click)="importNow()" class="menu-item" [disabled]="taskService.isImporting()">
+            <ion-icon slot="start" name="cloud-download-outline" color="tertiary"></ion-icon>
+            <ion-label>
+              <h3>Importar de API</h3>
+              <p>Traer tareas externas</p>
+            </ion-label>
+          </ion-item>
+        </ion-menu-toggle>
+
+        <!-- Botón Descargar APK Android -->
+        <ion-menu-toggle [autoHide]="false">
+          <ion-item button (click)="downloadApk()" class="menu-item apk-download-item">
+            <ion-icon slot="start" name="logo-android" color="success"></ion-icon>
+            <ion-label>
+              <h3 style="color: var(--ion-color-success); font-weight: 700;">Descargar App Android</h3>
+              <p>Instalar TaskFlow Pro (.apk)</p>
+            </ion-label>
+            <ion-icon slot="end" name="download-outline" color="success"></ion-icon>
+          </ion-item>
+        </ion-menu-toggle>
+
+        @if (authService.isAuthenticated()) {
+          <ion-menu-toggle [autoHide]="false">
+            <ion-item button (click)="logout()" class="menu-item logout-item ion-margin-top">
+              <ion-icon slot="start" name="log-out-outline" color="danger"></ion-icon>
+              <ion-label color="danger">Cerrar Sesión</ion-label>
+            </ion-item>
+          </ion-menu-toggle>
+        } @else {
+          <ion-menu-toggle [autoHide]="false">
+            <ion-item routerLink="/login" routerDirection="root" class="menu-item login-item ion-margin-top">
+              <ion-icon slot="start" name="log-in-outline" color="primary"></ion-icon>
+              <ion-label color="primary">Iniciar Sesión</ion-label>
+            </ion-item>
+          </ion-menu-toggle>
+        }
+      </ion-list>
+    </ion-content>
+  </ion-menu>
+
+  <!-- Contenedor Principal con Router Outlet -->
+  <ion-router-outlet id="main-content"></ion-router-outlet>
+</ion-app>
