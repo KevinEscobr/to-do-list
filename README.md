@@ -4,6 +4,12 @@ Este documento describe exclusivamente los pasos para ejecutar la aplicacion fro
 
 ---
 
+## Proyecto en Produccion con Servidor Propio
+
+URL de acceso a la aplicacion: https://todolist.nennge.me/login
+
+---
+
 ## 1. Requisitos Previos
 
 Para ejecutar la aplicacion web y compilar el archivo APK, se requiere contar con las siguientes herramientas instaladas:
